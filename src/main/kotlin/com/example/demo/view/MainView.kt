@@ -207,6 +207,7 @@ class MainView : View() {
         exitButton.relocate(1450.0, 800.0)
 
         root.children.addAll(gridView, controlRect1, controlRect2, controlGrid1, controlGrid2, restartButton, exitButton)
+        
     }
 
     private fun listOfWords(file: File): List<String> {
