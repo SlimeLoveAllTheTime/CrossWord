@@ -1,29 +1,18 @@
 package com.example.demo.view
 
-import com.example.demo.app.Styles
-import com.sun.prism.paint.Color
-import javafx.scene.Group
+import com.example.demo.model.*
+import javafx.geometry.Insets
 import javafx.scene.control.Button
 import javafx.scene.control.TextArea
 import javafx.scene.image.Image
 import javafx.scene.image.ImageView
-import javafx.scene.layout.BackgroundFill
-import javafx.scene.layout.BackgroundImage
-import javafx.scene.layout.GridPane
-import javafx.scene.layout.Pane
-import javafx.scene.paint.Paint
+import javafx.scene.layout.*
 import javafx.scene.shape.Rectangle
-import javafx.scene.text.Font
-import javafx.scene.text.FontPosture
-import javafx.scene.text.FontWeight
-import javafx.scene.text.Text
+import javafx.scene.text.*
 import javafx.stage.FileChooser
 import tornadofx.*
 import java.io.File
-import java.lang.IllegalStateException
 import kotlin.system.exitProcess
-
-lateinit var words: File
 
 class MainView : View() {
 
@@ -37,13 +26,15 @@ class MainView : View() {
 
     private val fileChooser = FileChooser()
 
-    private var cells = Group()
-
     private var width1 = 1580.0
 
     private var height1 = 1150.0
 
+    lateinit var words: File
+
     private var exitBut = Button("Выйти")
+
+    private val image = ImageView(Image("file:src\\main\\resources\\backGround.jpg"))
 
     init {
 
@@ -52,7 +43,6 @@ class MainView : View() {
 
             primaryStage.icons.add(Image("file:src\\main\\resources\\icon.png"))
 
-            val image = ImageView(Image("file:src\\main\\resources\\backGround.jpg"))
             image.prefHeight(0.0)
             image.prefWidth(0.0)
             root.children.add(image)
@@ -65,23 +55,23 @@ class MainView : View() {
                 setPrefSize(width1, height1)
             }
 
-            exitBut.relocate(790.0, 500.0)
+            exitBut.relocate(750.0, 500.0)
             exitBut.setPrefSize(100.0, 40.0)
             root.children.add(exitBut)
             exitBut.action { exitProcess(0) }
 
             startBut.setPrefSize(100.0, 50.0)
-            startBut.relocate(790.0, 300.0)
+            startBut.relocate(750.0, 300.0)
 
             chooseBut.setPrefSize(100.0, 50.0)
-            chooseBut.relocate(790.0, 400.0)
+            chooseBut.relocate(750.0, 400.0)
 
             val chooseText = Text("Выберите файл")
             chooseText.font = Font.font("times new roman", FontWeight.BOLD, FontPosture.REGULAR, 17.0)
-            chooseText.relocate(790.0 - 7, 300.0)
+            chooseText.relocate(750.0 - 7, 300.0)
 
             createCrossWord.setPrefSize(150.0, 60.0)
-            createCrossWord.relocate(765.0, 400.0)
+            createCrossWord.relocate(725.0, 400.0)
 
             val rect = Rectangle()
             rect.height = 30.0
@@ -102,7 +92,7 @@ class MainView : View() {
             chooseBut.action {
                 chooseBut.hide()
                 words = try {
-                    fileChooser.showOpenDialog(null)
+                    File(fileChooser.showOpenDialog(null).absolutePath)
                 } catch (e: IllegalStateException) {
                     File(fileChooser.initialFileName)
                 }
@@ -112,45 +102,111 @@ class MainView : View() {
                 root.children.add(createCrossWord)
             }
 
-            val wordsRectangle = Rectangle()
-            wordsRectangle.height = 700.0
-            wordsRectangle.width = 600.0
-            wordsRectangle.fill = javafx.scene.paint.Color.CORNFLOWERBLUE
-            wordsRectangle.relocate(30.0, 30.0)
-
             val subWordsPanel = TextArea()
             subWordsPanel.font = Font.font("times new roman", FontWeight.BOLD, FontPosture.REGULAR, 17.0)
             subWordsPanel.relocate(35.0, 35.0)
 
             createCrossWord.action {
-                root.children.forEach { if (it != image) it.hide() }
-                root.children.addAll(wordsRectangle)
-                createBoard()
+                createCrossWordView()
             }
-
         }
     }
 
-    private fun createBoard() {
-        var rectangle: Rectangle
-        for (i in 0..9) {
-            for (j in 0..9) {
-                rectangle = createCell(i, j)
-                cells.children.add(rectangle)
+    private fun createCrossWordView() {
+
+        root.children.forEach { if (it != image) it.hide() }
+
+        val gridView = GridPane()
+        val wordsList = listOfWords(words).map { Word(it) }.toMutableList()
+        val crossWord = CrossWord(wordsList)
+        crossWord.solver()
+        val gridLogic = crossWord.grid
+        val column = gridLogic.columnLength
+        val row = gridLogic.rowLength
+        val cellSize = if (row > 25) 25.5 else 30.0
+        for (i in 0 until row) {
+            for (j in 0 until column) {
+                val cell: Button
+                val value = gridLogic.grid[i][j]
+                cell = if (value != '#') Button("$value")
+                else Button()
+                cell.font = if (row > 25) Font.font(10.0) else Font.font(12.0)
+                cell.setPrefSize(cellSize, cellSize)
+                cell.background = if (value == '#') Background(BackgroundFill(javafx.scene.paint.Color.DARKGRAY, CornerRadii(0.0), Insets(0.0)))
+                else Background(BackgroundFill(javafx.scene.paint.Color.WHITE, CornerRadii(0.0), Insets(0.0)))
+                gridView.add(cell, j, i)
             }
         }
-        root.children.addAll(cells)
-    }
 
-    private fun createCell(i: Int, j: Int): Rectangle {
-        val size = 83.0
-        val rectangle = Rectangle()
-        val start = (height1 + 310) / 2
-        rectangle.height = size - 5
-        rectangle.width = size - 5
-        rectangle.fill = javafx.scene.paint.Color.CORNFLOWERBLUE
-        rectangle.relocate(i * size + start, j * size + 13)
-        return rectangle
+        val sideStart = (1580.0 - cellSize * column) / 2
+        val topStart = (800.0 - cellSize * row) / 2
+        gridView.relocate(sideStart, topStart)
+        gridView.isGridLinesVisible = true
+
+        val placedWord = mutableListOf<String>()
+        val unplacedWord = mutableListOf<String>()
+        crossWord.wordsList.forEach {
+            if (it.isPlaced()) placedWord.add(it.word)
+            else unplacedWord.add(it.word)
+        }
+
+        val controlGrid1 = GridPane()
+        controlGrid1.add(Text("Кроссворд состоит из слов:"), 0, 0)
+        for (i in 0 until placedWord.size) {
+            val value = placedWord[i]
+            if (i == placedWord.size - 1) {
+                val text = Text(value)
+                controlGrid1.add(text, 0, i + 1)
+                break
+            }
+            val text = Text(value)
+            controlGrid1.add(text, 0, i + 1)
+        }
+        controlGrid1.relocate(25.0, 50.0)
+        val controlRect1 = Rectangle(250.0, 1580.0)
+        controlRect1.relocate(0.0, 0.0)
+        controlRect1.fill = javafx.scene.paint.Color.WHITE
+
+        val controlGrid2 = GridPane()
+        controlGrid2.add(Text("Кроссворд Солвер не расположил слова:"), 0, 0)
+        if (unplacedWord.isEmpty()) controlGrid2.add(Text("Кроссворд содержит все слова!"), 0, 1)
+        else {
+            for (i in 0 until unplacedWord.size) {
+                val value = unplacedWord[i]
+                if (i == unplacedWord.size - 1) {
+                    val text = Text(value)
+                    controlGrid2.add(text, 0, i + 1)
+                    break
+                }
+                val text = Text(value)
+                controlGrid2.add(text, 0, i + 1)
+            }
+        }
+        controlGrid2.relocate(1360.0, 50.0)
+        val controlRect2 = Rectangle(250.0, 1580.0)
+        controlRect2.relocate(1352.0, 0.0)
+        controlRect2.fill = javafx.scene.paint.Color.WHITE
+
+        val restartButton = Button("Новый кроссворд")
+        restartButton.action {
+            words = try {
+                File(fileChooser.showOpenDialog(null).absolutePath)
+            } catch (e: IllegalStateException) {
+                File(fileChooser.initialFileName)
+            }
+            val createButton = Button("Создать кроссворд")
+            createButton.action { createCrossWordView() }
+            createButton.relocate(50.0, 800.0)
+            restartButton.hide()
+            root.children.add(createButton)
+        }
+        restartButton.relocate(50.0, 800.0)
+
+        val exitButton = Button("Выйти")
+        exitButton.action { exitProcess(0) }
+        exitButton.relocate(1450.0, 800.0)
+
+        root.children.addAll(gridView, controlRect1, controlRect2, controlGrid1, controlGrid2, restartButton, exitButton)
     }
 
     private fun listOfWords(file: File): List<String> {
@@ -164,8 +220,4 @@ class MainView : View() {
         return result
     }
 
-
 }
-
-
-
