@@ -22,7 +22,7 @@ class MainView : View() {
 
     /**
      * Кнопки, которые буду использоваться повторно
-     */
+     * */
     private val createCrossWord = Button("Создать Кросссворд")
     private val chooseBut = Button("Выбрать")
     private val startBut = Button("Начать")
