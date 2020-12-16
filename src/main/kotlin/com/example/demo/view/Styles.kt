@@ -1,4 +1,4 @@
-package com.example.demo.model
+package com.example.demo.view
 
 import javafx.scene.image.Image
 import javafx.scene.layout.Background

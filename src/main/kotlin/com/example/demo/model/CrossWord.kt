@@ -181,6 +181,7 @@ class CrossWord(var wordsList: MutableList<Word>) {
     /**
      * Задаем всем словам дефолтные координаты
      */
-    fun defaultCoordinates() = wordsList.forEach{ it.setCoordinates(Pair(-1, -1)) }
+    fun defaultCoordinates() = wordsList.forEach { it.setCoordinates(Pair(-1, -1)) }
 
 }
+
